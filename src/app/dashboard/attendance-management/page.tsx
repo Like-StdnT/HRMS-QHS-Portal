@@ -56,7 +56,7 @@ export default function AttendanceManagementPage() {
     setDeletingId(null)
   }
 
-  const recordByEmployee = useMemo(() => new Map(data.records.map((r: any) => [r.employeeId, r])), [data.records])
+  const recordByEmployee = useMemo(() => new Map<string, any>(data.records.map((r: any) => [r.employeeId, r])), [data.records])
   const stats = useMemo(() => {
     const records = data.records as any[]
     return {

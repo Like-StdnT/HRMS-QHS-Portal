@@ -74,3 +74,20 @@ button, input, select, textarea { font: inherit; }
 @media (max-width: 900px) {
   .q-mobile-scroll { overflow-x: auto; }
 }
+
+/* Custom sleek scrollbar for slidable workspace & dashboard */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+

@@ -40,19 +40,28 @@ export default function DashboardPage() {
   const mins = attendance?.workingMinutes
   const hours = mins != null ? `${Math.floor(mins / 60)}h ${mins % 60}m` : attendance?.punchIn ? 'In progress' : 'Not punched in'
 
-  const employeeCards = [
+  interface DashboardCard {
+    title: string
+    value: any
+    note: string
+    icon: any
+    tone: string
+    href?: string
+  }
+
+  const employeeCards: DashboardCard[] = [
     { title: 'CL Balance', value: `${leave.balance?.remaining ?? 0} Days`, note: 'Available for the current year', icon: CalendarDays, tone: 'blue' },
     { title: 'Comp-offs', value: (leave.compOffs || []).filter((x: any) => x.status === 'AVAILABLE').length, note: 'Approved and available', icon: WalletCards, tone: 'orange' },
     { title: "Today's Attendance", value: hours, note: 'Punch in / punch out status', icon: Clock3, tone: 'green' },
   ]
 
-  const adminCards = [
+  const adminCards: DashboardCard[] = [
     { title: 'Active Employees', value: adminStats.activeEmployees, note: 'Current employee master', icon: Users, tone: 'blue', href: '/dashboard/employees' },
     { title: 'Pending Leaves', value: adminStats.pendingLeaves, note: 'Requests awaiting review', icon: CalendarDays, tone: 'orange', href: '/dashboard/leave-regularization' },
     { title: 'Pending Comp-offs', value: adminStats.pendingCompOffs, note: 'Requests awaiting review', icon: WalletCards, tone: 'green', href: '/dashboard/leave-regularization' },
   ]
 
-  const cards = isSuperAdmin ? adminCards : employeeCards
+  const cards: DashboardCard[] = isSuperAdmin ? adminCards : employeeCards
 
   return <div className="space-y-7">
     <section className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#14245b] to-[#1b74c4] p-7 text-white shadow-lg md:p-9"><div className="absolute -right-16 -top-20 h-64 w-64 rounded-full border-[55px] border-white/10"/><div className="relative"><p className="text-sm font-semibold text-blue-100">{isSuperAdmin ? 'Administration workspace' : 'Good to see you'}</p><h1 className="mt-1 text-3xl font-extrabold tracking-tight md:text-4xl">{isSuperAdmin ? 'Welcome, Super Admin' : `Welcome, ${session?.user?.name || session?.user?.id}`}</h1><p className="mt-3 max-w-2xl text-sm leading-6 text-blue-100">{isSuperAdmin ? 'Manage employee records and pending HR actions from one secure workspace.' : 'Here is your current attendance, leave and payroll overview in one place.'}</p></div></section>

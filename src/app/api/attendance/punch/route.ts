@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import prisma from '@/lib/prisma'
-import { authOptions } from '@/app/api/auth/[...nextauth]/route'
+import { authOptions } from '@/lib/auth'
 import { indiaMidnight, formatIndiaDateTime, workingMinutes } from '@/lib/attendance'
 import { sendHRNotification } from '@/lib/email'
 import { syncAttendanceToGoogleSheets } from '@/lib/google-sheets'
@@ -29,6 +29,8 @@ async function requireEmployee() {
   return { session, employee }
 }
 
+export const dynamic = 'force-dynamic'
+
 export async function GET() {
   try {
     const auth = await requireEmployee()
@@ -45,7 +47,7 @@ export async function GET() {
       },
     })
 
-    const today = await prisma.attendance.findUnique({
+    let today = await prisma.attendance.findUnique({
       where: { employeeId_date: { employeeId: auth.employee.id, date: indiaMidnight() } },
       select: {
         id: true, date: true, punchIn: true, reachedAt: true, punchOut: true,
@@ -56,6 +58,25 @@ export async function GET() {
         lastLatitude: true, lastLongitude: true, lastAccuracy: true, lastLocationAt: true,
       },
     })
+
+    if (!today) {
+      today = await prisma.attendance.findFirst({
+        where: {
+          employeeId: auth.employee.id,
+          punchOut: null,
+          punchIn: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) },
+        },
+        orderBy: { date: 'desc' },
+        select: {
+          id: true, date: true, punchIn: true, reachedAt: true, punchOut: true,
+          travelMinutes: true, workingMinutes: true, hospitalName: true, status: true,
+          startLatitude: true, startLongitude: true, startAccuracy: true,
+          reachedLatitude: true, reachedLongitude: true, reachedAccuracy: true,
+          punchOutLatitude: true, punchOutLongitude: true, punchOutAccuracy: true,
+          lastLatitude: true, lastLongitude: true, lastAccuracy: true, lastLocationAt: true,
+        },
+      })
+    }
 
     return NextResponse.json({ records, today })
   } catch (error) {
@@ -76,6 +97,17 @@ export async function POST(req: Request) {
 
     const date = indiaMidnight()
     let attendance = await prisma.attendance.findUnique({ where: { employeeId_date: { employeeId: auth.employee.id, date } } })
+
+    if (!attendance && action !== 'START_TRAVEL') {
+      attendance = await prisma.attendance.findFirst({
+        where: {
+          employeeId: auth.employee.id,
+          punchOut: null,
+          punchIn: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) },
+        },
+        orderBy: { date: 'desc' },
+      })
+    }
 
     if (action === 'START_TRAVEL') {
       if (attendance) return NextResponse.json({ error: 'Today\'s attendance has already been started.' }, { status: 409 })

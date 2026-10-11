@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import prisma from '@/lib/prisma'
-import { authOptions } from '@/app/api/auth/[...nextauth]/route'
+import { authOptions } from '@/lib/auth'
 
 function calculateAnnualNewRegimeTax(annualSalary: number) {
   const taxableIncome = Math.max(0, annualSalary - 75000) // standard deduction for salaried employees under the new regime
