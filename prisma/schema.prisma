@@ -1,0 +1,257 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Employee {
+  id             String         @id
+  name           String
+  role           String         @default("EMPLOYEE")
+  hashedPassword String
+  email          String?        @unique
+  department     String?
+  designation    String?
+  dateOfJoining  DateTime?
+  annualCtc      Float?
+  monthlySalary  Float?
+  workMode       String         @default("FIELD")
+  active         Boolean        @default(true)
+  profileImageUrl String?
+  bankAccountName String?
+  bankAccountNumber String?
+  bankIfsc       String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  attendances        Attendance[]
+  leaveBalances      LeaveBalance[]
+  leaveAccruals      LeaveAccrual[]
+  leaveRequests      LeaveRequest[]
+  compOffs           CompOff[]
+  compOffRequests    CompOffRequest[]
+  payslips           Payslip[]
+  regularizations    AttendanceRegularization[]
+  encashments        LeaveEncashment[]
+
+  @@index([active])
+}
+
+model Attendance {
+  id                   String   @id @default(cuid())
+  employeeId           String
+  date                 DateTime
+  punchIn              DateTime?
+  reachedAt            DateTime?
+  punchOut             DateTime?
+  travelMinutes        Int?
+  workingMinutes       Int?
+  hospitalName         String?
+  startLatitude        Float?
+  startLongitude       Float?
+  startAccuracy        Float?
+  reachedLatitude      Float?
+  reachedLongitude     Float?
+  reachedAccuracy      Float?
+  punchOutLatitude     Float?
+  punchOutLongitude    Float?
+  punchOutAccuracy     Float?
+  lastLatitude         Float?
+  lastLongitude        Float?
+  lastAccuracy         Float?
+  lastLocationAt       DateTime?
+  status               String   @default("TRAVELLING")
+  source               String   @default("EMPLOYEE")
+  regularizationStatus String   @default("NONE")
+  regularizationReason String?
+  regularizedBy        String?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  employee             Employee @relation(fields: [employeeId], references: [id])
+  locations            AttendanceLocation[]
+
+  @@unique([employeeId, date])
+  @@index([date])
+}
+
+model AttendanceLocation {
+  id           String     @id @default(cuid())
+  attendanceId String
+  latitude     Float
+  longitude    Float
+  accuracy     Float?
+  event        String
+  capturedAt   DateTime   @default(now())
+
+  attendance   Attendance @relation(fields: [attendanceId], references: [id], onDelete: Cascade)
+
+  @@index([attendanceId, capturedAt])
+}
+
+model AttendanceRegularization {
+  id           String   @id @default(cuid())
+  employeeId   String
+  attendanceId String?
+  date         DateTime
+  oldPunchIn   DateTime?
+  oldReachedAt DateTime?
+  oldPunchOut  DateTime?
+  newPunchIn   DateTime?
+  newReachedAt DateTime?
+  newPunchOut  DateTime?
+  reason       String
+  updatedBy    String
+  createdAt    DateTime @default(now())
+
+  employee     Employee @relation(fields: [employeeId], references: [id])
+
+  @@index([employeeId, date])
+}
+
+model LeaveBalance {
+  id         String   @id @default(cuid())
+  employeeId String
+  leaveType  String
+  year       Int
+  total      Float    @default(0)
+  used       Float    @default(0)
+  encashed   Float    @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  employee   Employee @relation(fields: [employeeId], references: [id])
+
+  @@unique([employeeId, leaveType, year])
+}
+
+model LeaveAccrual {
+  id           String   @id @default(cuid())
+  employeeId   String
+  year         Int
+  month        Int
+  creditedDays Float    @default(1)
+  creditedAt   DateTime @default(now())
+
+  employee     Employee @relation(fields: [employeeId], references: [id])
+
+  @@unique([employeeId, year, month])
+  @@index([employeeId, year])
+}
+
+model LeaveRequest {
+  id              String    @id @default(cuid())
+  employeeId      String
+  startDate       DateTime
+  endDate         DateTime
+  leaveType       String
+  days            Float     @default(1)
+  durationType    String    @default("FULL_DAY")
+  reason          String?
+  status          String    @default("PENDING")
+  approvedBy      String?
+  approvedAt      DateTime?
+  rejectionReason String?
+  reviewRemarks   String?
+  source          String    @default("EMPLOYEE")
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  employee        Employee  @relation(fields: [employeeId], references: [id])
+
+  @@index([employeeId, status])
+  @@index([startDate, endDate])
+}
+
+model CompOff {
+  id         String   @id @default(cuid())
+  employeeId String
+  dateEarned DateTime
+  expiryDate DateTime?
+  status     String   @default("AVAILABLE")
+  grantedBy  String?
+  requestId  String? @unique
+  duration   Float    @default(1)
+  durationType String  @default("FULL_DAY")
+  createdAt  DateTime @default(now())
+
+  employee   Employee @relation(fields: [employeeId], references: [id])
+  request    CompOffRequest? @relation(fields: [requestId], references: [id])
+
+  @@index([employeeId, status])
+}
+
+model CompOffRequest {
+  id           String   @id @default(cuid())
+  employeeId   String
+  workedDate   DateTime
+  reason       String
+  status       String   @default("PENDING")
+  reviewedBy   String?
+  reviewedAt   DateTime?
+  rejectionReason String?
+  reviewRemarks String?
+  duration      Float    @default(1)
+  durationType  String   @default("FULL_DAY")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  employee     Employee @relation(fields: [employeeId], references: [id])
+  compOff      CompOff?
+
+  @@index([employeeId, status])
+}
+
+model LeaveEncashment {
+  id          String   @id @default(cuid())
+  employeeId  String
+  year        Int
+  days        Float
+  amount      Float
+  processedBy String
+  processedAt DateTime @default(now())
+
+  employee    Employee @relation(fields: [employeeId], references: [id])
+
+  @@unique([employeeId, year])
+}
+
+model Payslip {
+  id             String   @id @default(cuid())
+  employeeId     String
+  month          String
+  monthlySalary  Float    @default(0)
+  calendarDays   Int      @default(0)
+  workingDays    Float    @default(0)
+  weeklyOffs     Float    @default(0)
+  casualLeave    Float    @default(0)
+  compOffGranted Float    @default(0)
+  compOffUsed    Float    @default(0)
+  lwp            Float    @default(0)
+  ghHolidayLeave Float    @default(0)
+  totalLeave     Float    @default(0)
+  pendingCasualLeave Float @default(0)
+  paidDays       Float    @default(0)
+  extraWorkingDaySunday Float @default(0)
+  perDaySalary   Float    @default(0)
+  earnedSalary   Float    @default(0)
+  otherEarnings  Float    @default(0)
+  pf             Float    @default(0)
+  esi            Float    @default(0)
+  tds            Float    @default(0)
+  incomeTax      Float    @default(0)
+  otherDeductions Float  @default(0)
+  netPay         Float    @default(0)
+  workingHours   Float    @default(0)
+  hrRemarks      String?
+  published      Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  employee       Employee @relation(fields: [employeeId], references: [id])
+
+  @@unique([employeeId, month])
+}
