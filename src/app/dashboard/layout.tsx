@@ -1,9 +1,8 @@
 "use client"
 
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { useEffect, useRef, useState } from "react"
 import { useSession, signOut } from "next-auth/react"
-import { redirect } from "next/navigation"
 import Link from "next/link"
 import Image from "next/image"
 import {
@@ -28,6 +27,7 @@ const nav = [
 ]
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const router = useRouter()
   const { data: session, status } = useSession()
   const pathname = usePathname()
   const [profileImageUrl, setProfileImageUrl] = useState<string | null>(null)
@@ -74,8 +74,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     return () => { cancelled = true }
   }, [session?.user?.id])
 
-  if (status === "loading") return <div className="flex min-h-screen items-center justify-center bg-[#f6f9fd] text-slate-500">Loading Quantzo HR Portal...</div>
-  if (!session) redirect("/")
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.replace("/")
+    }
+  }, [status, router])
+
+  if (status === "loading" || !session) {
+    return <div className="flex min-h-screen items-center justify-center bg-[#f6f9fd] text-slate-500">Loading Quantzo HR Portal...</div>
+  }
   if (session.user.active === false) return <div className="flex min-h-screen items-center justify-center bg-[#f6f9fd] text-slate-500">Your portal access has been disabled. Signing out...</div>
 
   return (

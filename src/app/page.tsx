@@ -1,18 +1,25 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Image from "next/image"
-import { signIn } from "next-auth/react"
+import { signIn, useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { ArrowRight, CalendarDays, Eye, EyeOff, LockKeyhole, ShieldCheck, Users, WalletCards } from "lucide-react"
 
 export default function LoginPage() {
   const router = useRouter()
+  const { status: sessionStatus } = useSession()
   const [employeeId, setEmployeeId] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    if (sessionStatus === "authenticated") {
+      router.replace("/dashboard")
+    }
+  }, [sessionStatus, router])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault(); setLoading(true); setError("")
@@ -28,17 +35,11 @@ export default function LoginPage() {
       setLoading(false)
       return
     }
-    // Force a fresh navigation to /dashboard on current domain so the session cookie is loaded
-    let target = "/dashboard"
-    if (res?.url) {
-      try {
-        const parsed = new URL(res.url, window.location.origin)
-        target = parsed.pathname + parsed.search
-      } catch {
-        target = "/dashboard"
-      }
+
+    if (res?.ok) {
+      router.replace("/dashboard")
+      router.refresh()
     }
-    window.location.assign(target)
   }
 
   return (
