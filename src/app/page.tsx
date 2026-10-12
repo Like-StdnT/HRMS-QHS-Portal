@@ -28,9 +28,17 @@ export default function LoginPage() {
       setLoading(false)
       return
     }
-    // Force a fresh navigation so the newly-created NextAuth session cookie is
-    // available to the dashboard on the very first login attempt.
-    window.location.assign(res?.url || "/dashboard")
+    // Force a fresh navigation to /dashboard on current domain so the session cookie is loaded
+    let target = "/dashboard"
+    if (res?.url) {
+      try {
+        const parsed = new URL(res.url, window.location.origin)
+        target = parsed.pathname + parsed.search
+      } catch {
+        target = "/dashboard"
+      }
+    }
+    window.location.assign(target)
   }
 
   return (
