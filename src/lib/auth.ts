@@ -4,6 +4,7 @@ import prisma from "@/lib/prisma"
 import bcrypt from "bcryptjs"
 
 export const authOptions: NextAuthOptions = {
+  secret: process.env.NEXTAUTH_SECRET,
   providers: [
     CredentialsProvider({
       name: 'Employee ID',
@@ -16,33 +17,40 @@ export const authOptions: NextAuthOptions = {
           return null
         }
 
-        const employee = await prisma.employee.findFirst({
-          where: {
-            OR: [
-              { id: credentials.employeeId },
-              { email: credentials.employeeId },
-            ]
+        try {
+          const employee = await prisma.employee.findFirst({
+            where: {
+              OR: [
+                { id: credentials.employeeId },
+                { email: credentials.employeeId },
+              ]
+            }
+          })
+
+          if (!employee || !employee.active) {
+            console.warn(`[AUTH] Employee not found or inactive: ${credentials.employeeId}`)
+            return null
           }
-        })
 
-        if (!employee || !employee.active) {
-          return null
-        }
+          const isPasswordValid = await bcrypt.compare(
+            credentials.password,
+            employee.hashedPassword
+          )
 
-        const isPasswordValid = await bcrypt.compare(
-          credentials.password,
-          employee.hashedPassword
-        )
+          if (!isPasswordValid) {
+            console.warn(`[AUTH] Invalid password for: ${credentials.employeeId}`)
+            return null
+          }
 
-        if (!isPasswordValid) {
-          return null
-        }
-
-        return {
-          id: employee.id,
-          name: employee.name,
-          role: employee.role,
-          active: employee.active,
+          return {
+            id: employee.id,
+            name: employee.name,
+            role: employee.role,
+            active: employee.active,
+          }
+        } catch (error) {
+          console.error("[AUTH] Error connecting to database or verifying credentials:", error)
+          throw error
         }
       }
     })

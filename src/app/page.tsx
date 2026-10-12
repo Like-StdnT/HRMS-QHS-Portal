@@ -18,7 +18,13 @@ export default function LoginPage() {
     e.preventDefault(); setLoading(true); setError("")
     const res = await signIn("credentials", { employeeId: employeeId.trim(), password, redirect: false, callbackUrl: "/dashboard" })
     if (res?.error) {
-      setError("Invalid Employee ID or Password")
+      if (res.error === "Configuration") {
+        setError("Configuration error: NEXTAUTH_SECRET is missing or invalid in deployment environment variables.")
+      } else if (res.error === "CredentialsSignin") {
+        setError("Invalid Employee ID or Password")
+      } else {
+        setError(`Login failed (${res.error}). Please check server logs and database connection.`)
+      }
       setLoading(false)
       return
     }
