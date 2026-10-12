@@ -73,14 +73,17 @@ export default function LoginPage() {
 
         <section className="relative flex flex-1 items-center justify-center px-2 py-8 lg:px-10">
           <div className="w-full max-w-[560px]">
-            <div className="mb-5 flex items-center justify-between lg:hidden">
-              <Image src="/quantzo-logo.png" alt="Quantzo Health Services" width={155} height={105} className="h-auto w-[155px]" />
+            <div className="mb-6 flex items-center justify-center lg:hidden">
+              <Image src="/quantzo-logo.png" alt="Quantzo Health Services" width={165} height={110} className="h-auto w-[165px] rounded-2xl bg-white/95 p-2.5 shadow-sm" priority />
             </div>
             <div className="q-card overflow-hidden rounded-[28px]">
               <div className="h-2 bg-gradient-to-r from-[#f15a24] via-[#ff8b55] to-[#1684dc]" />
               <div className="p-7 sm:p-10">
-                <div className="mb-8">
-                  <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#1f86df]">Quantzo Health Services</p>
+                <div className="mb-8 text-center sm:text-left">
+                  <div className="hidden lg:flex justify-center mb-5">
+                    <Image src="/quantzo-logo.png" alt="Quantzo Health Services" width={175} height={120} className="h-auto w-[165px]" priority />
+                  </div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#1f86df]">Quantzo Health Services</p>
                   <h2 className="mt-2 text-3xl font-extrabold tracking-tight text-[#14245b] sm:text-4xl">Sign in</h2>
                   <p className="mt-2 text-sm leading-6 text-slate-500">Sign in to access your HR portal.</p>
                 </div>
